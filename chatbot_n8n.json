@@ -1,0 +1,171 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "chatbot",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "31d38567-4af7-4b16-84b2-627a89aebcb6",
+      "name": "Webhook",
+      "webhookId": "71641ded-e638-4668-a728-08e74dd75c9d"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1tYiqvV4k8X4DQwDopqtKcWJLvFhWFJAAQfiMx1ngToA",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Página1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1tYiqvV4k8X4DQwDopqtKcWJLvFhWFJAAQfiMx1ngToA/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        208,
+        0
+      ],
+      "id": "b14edc61-0373-4fab-a801-ebfed0fb688e",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Yb2ctFaCJHR52jhs",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const linhas = $input.all();\n\n// Se quiser manter como string para um \"Prompt\", \n// certifique-se de incluir todos os dados necessários\nlet contexto = linhas.map(item => {\n  const { row_number, categoria, pergunta, resposta } = item.json;\n  return `ID: ${row_number} | [${categoria}] Pergunta: ${pergunta} -> Resposta: ${resposta}`;\n}).join('\\n');\n\nconst perguntaUsuario = $('Webhook').first().json.body.mensagem;\n\nreturn {\n    contexto: contexto,\n    pergunta: perguntaUsuario,\n    total_registros: linhas.length // Boa prática para depuração\n  };"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        416,
+        0
+      ],
+      "id": "ab0d6d53-009d-408c-bb80-6b0594823a2d",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": ""
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"llama-3.3-70b-versatile\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"Você é um assistente de suporte da Nola, sistema de gestão para restaurantes. Responda APENAS com base na base de conhecimento fornecida. Se a pergunta não estiver coberta, diga: 'Não encontrei essa informação. Vou acionar nosso time para te ajudar em breve!' Seja direto, claro e amigável.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": {{ JSON.stringify(\"Base de conhecimento:\\n\" + $json.contexto + \"\\n\\nPergunta do cliente: \" + $json.pergunta) }}\n    }\n  ],\n  \"temperature\": 0.3\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        624,
+        0
+      ],
+      "id": "b99e7633-c16d-498b-a227-b59ac496faac",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"resposta\": $json.choices[0].message.content } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        832,
+        0
+      ],
+      "id": "abc4a2d8-cb9c-4c93-b983-44eab0dee33e",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "714739e4-a6db-4e86-91f1-95eec5c1700c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "8aa9fb6355224472cb91b7ca800b72cf680fa299b5d1adc1a861e2e3bcfdb6a9"
+  },
+  "id": "3l5tECLzrSuTMcwu",
+  "tags": []
+}
