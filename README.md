@@ -58,4 +58,4 @@ Esta implementação impacta diretamente os principais KPIs da área:
 **Camilla Paula Soares Santos**
 *   Analista de Systems Analysis and Development.
 *   Foco em Customer Success, Automação e Soluções Tecnológicas.
-*   [LinkedIn](www.linkedin.com/in/camilla-paula-281088185) | [GitHub](https://github.com/CammillaPS) 
+*   [LinkedIn](https://www.linkedin.com/in/camilla-paula-281088185) | [GitHub](https://github.com/CammillaPS) 
