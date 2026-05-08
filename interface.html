@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Nola CS Chatbot</title>
+  <style>
+    body { font-family: sans-serif; max-width: 500px; margin: 40px auto; padding: 0 20px; }
+    h2 { color: #e8432d; }
+    #chat { border: 1px solid #ddd; border-radius: 8px; padding: 16px;
+            height: 300px; overflow-y: auto; margin-bottom: 12px; }
+    .msg-user { text-align: right; margin: 8px 0; }
+    .msg-bot  { text-align: left;  margin: 8px 0; }
+    .bubble { display: inline-block; padding: 8px 12px; border-radius: 12px; max-width: 80%; }
+    .msg-user .bubble { background: #e8432d; color: white; }
+    .msg-bot  .bubble { background: #eee; }
+    #input-area { display: flex; gap: 8px; }
+    input  { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 6px; }
+    button { padding: 10px 16px; background: #e8432d; color: white;
+             border: none; border-radius: 6px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h2>🍽️ Nola — Suporte CS</h2>
+  <div id="chat"></div>
+  <div id="input-area">
+    <input type="text" id="pergunta" placeholder="Digite sua dúvida..." />
+    <button onclick="enviar()">Enviar</button>
+  </div>
+  <script>
+    const URL = "https://desafiochatbot.app.n8n.cloud/webhook-test/chatbot";
+    async function enviar() {
+      const input = document.getElementById("pergunta");
+      const chat  = document.getElementById("chat");
+      const texto = input.value.trim();
+      if (!texto) return;
+      chat.innerHTML += `<div class="msg-user"><span class="bubble">${texto}</span></div>`;
+      input.value = "";
+      const res  = await fetch(URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mensagem: texto })
+      });
+      const data = await res.json();
+      chat.innerHTML += `<div class="msg-bot"><span class="bubble">${data.resposta}</span></div>`;
+      chat.scrollTop = chat.scrollHeight;
+    }
+    document.getElementById("pergunta")
+      .addEventListener("keydown", e => e.key === "Enter" && enviar());
+  </script>
+</body>
+</html>
